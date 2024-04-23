@@ -8,6 +8,7 @@ extern "C" {
 // Structures
 
 typedef struct {
+    char DeviceName[255];
     char DeviceSystemPath[255];
     char Product[255];
     char ProductDescription[255];
@@ -16,7 +17,7 @@ typedef struct {
     char Vendor[255];
     char VendorDescription[255];
     char VendorID[255];
-    char DeviceName[255];
+    char SubSystem[255];
 } UsbDeviceData;
 
 // Function Pointers

@@ -12,7 +12,6 @@
 typedef struct UsbDeviceData
 {
     char DeviceName[255];
-    char SubSystem[255];
     char DeviceSystemPath[255];
     char Product[255];
     char ProductDescription[255];
@@ -21,6 +20,7 @@ typedef struct UsbDeviceData
     char Vendor[255];
     char VendorDescription[255];
     char VendorID[255];
+    char SubSystem[255];
 } UsbDeviceData;
 
 UsbDeviceData usbDevice;
