@@ -32,6 +32,10 @@ namespace Usb.Events
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 255)]
         public string VendorID;
+        
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 255)]
+        public string SubSystem;
+
     }
 
     /// <summary>
@@ -100,6 +104,11 @@ namespace Usb.Events
         public bool IsEjected { get; internal set; }
 
         /// <summary>
+        ///  Subsystem
+        /// </summary>
+        public string SubSystem { get; internal set; } = string.Empty;
+
+        /// <summary>
         /// USB device
         /// </summary>
         public UsbDevice()
@@ -117,6 +126,7 @@ namespace Usb.Events
             Vendor = usbDeviceData.Vendor;
             VendorDescription = usbDeviceData.VendorDescription;
             VendorID = usbDeviceData.VendorID;
+            SubSystem = usbDeviceData.SubSystem;
         }
 
         /// <summary>
@@ -125,16 +135,17 @@ namespace Usb.Events
         /// <returns>Each property on a new line</returns>
         public override string ToString()
         {
-            return "Device Name: " + DeviceName + Environment.NewLine +
-                "Device System Path: " + DeviceSystemPath + Environment.NewLine +
-                "Mounted Directory Path: " + MountedDirectoryPath + Environment.NewLine +
-                "Product: " + Product + Environment.NewLine +
-                "Product Description: " + ProductDescription + Environment.NewLine +
-                "Product ID: " + ProductID + Environment.NewLine +
-                "Serial Number: " + SerialNumber + Environment.NewLine +
-                "Vendor: " + Vendor + Environment.NewLine +
-                "Vendor Description: " + VendorDescription + Environment.NewLine +
-                "Vendor ID: " + VendorID + Environment.NewLine;
+            return $"Device Name: " + DeviceName + Environment.NewLine +
+                   "Device System Path: " + DeviceSystemPath + Environment.NewLine +
+                   "Mounted Directory Path: " + MountedDirectoryPath + Environment.NewLine +
+                   "Product: " + Product + Environment.NewLine +
+                   "Product Description: " + ProductDescription + Environment.NewLine +
+                   "Product ID: " + ProductID + Environment.NewLine +
+                   "Serial Number: " + SerialNumber + Environment.NewLine +
+                   "Vendor: " + Vendor + Environment.NewLine +
+                   "Vendor Description: " + VendorDescription + Environment.NewLine +
+                   "Vendor ID: " + VendorID + Environment.NewLine +
+                   "SubSystem: " + SubSystem + Environment.NewLine;
         }
     }
 }

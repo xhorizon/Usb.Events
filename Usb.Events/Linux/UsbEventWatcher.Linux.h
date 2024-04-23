@@ -8,7 +8,6 @@ extern "C" {
 // Structures
 
 typedef struct {
-    char DeviceName[255];
     char DeviceSystemPath[255];
     char Product[255];
     char ProductDescription[255];
@@ -17,16 +16,22 @@ typedef struct {
     char Vendor[255];
     char VendorDescription[255];
     char VendorID[255];
+    char DeviceName[255];
 } UsbDeviceData;
 
 // Function Pointers
 
 typedef void (*UsbDeviceCallback)(UsbDeviceData usbDevice);
-typedef void (*MountPointCallback)(const char* mountPoint);
+
+typedef void (*MountPointCallback)(const char *mountPoint);
 
 // Linux Functions
 
 void GetLinuxMountPoint(const char* syspath, MountPointCallback mountPointCallback);
+
+void StartLinuxWatcherWithSubSystem(UsbDeviceCallback insertedCallback, UsbDeviceCallback removedCallback,
+                                    const char** subSystemArr,
+                                    int subSystemCount);
 
 void StartLinuxWatcher(UsbDeviceCallback insertedCallback, UsbDeviceCallback removedCallback, int includeTTY);
 

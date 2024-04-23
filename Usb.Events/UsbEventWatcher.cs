@@ -94,7 +94,25 @@ namespace Usb.Events
         /// <param name="addAlreadyPresentDevicesToList">Set addAlreadyPresentDevicesToList to true to include already present devices in UsbDeviceList</param>
         /// <param name="usePnPEntity">Set usePnPEntity to true to query Win32_PnPEntity instead of Win32_USBControllerDevice in Windows</param>
         /// <param name="includeTTY">Set includeTTY to true to monitor the TTY subsystem in Linux (besides the USB subsystem)</param>
-        public void Start(bool addAlreadyPresentDevicesToList = false, bool usePnPEntity = false, bool includeTTY = false)
+        public void Start(bool addAlreadyPresentDevicesToList = false, bool usePnPEntity = false,
+            bool includeTTY = false)
+        {
+            var subSystems = new List<string> { "usb" };
+            if (includeTTY)
+            {
+                subSystems.Add("tty");
+            }
+
+            Start(subSystems.ToArray(), addAlreadyPresentDevicesToList, usePnPEntity);
+        }
+
+        /// <summary>
+        /// Start monitoring USB events with custom subsystem
+        /// </summary>
+        /// <param name="subSystems"></param>
+        /// <param name="addAlreadyPresentDevicesToList">Set addAlreadyPresentDevicesToList to true to include already present devices in UsbDeviceList</param>
+        /// <param name="usePnPEntity">Set usePnPEntity to true to query Win32_PnPEntity instead of Win32_USBControllerDevice in Windows</param>
+        public void Start(string[] subSystems, bool addAlreadyPresentDevicesToList = false, bool usePnPEntity = false)
         {
             if (_isRunning)
                 return;
@@ -138,7 +156,7 @@ namespace Usb.Events
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                _watcherTask = Task.Run(() => StartLinuxWatcher(InsertedCallback, RemovedCallback, includeTTY));
+                _watcherTask = Task.Run(() => StartLinuxWatcherWithSubSystem(InsertedCallback, RemovedCallback,subSystems,subSystems.Length ));
 
                 _cancellationTokenSource = new CancellationTokenSource();
 
@@ -163,7 +181,6 @@ namespace Usb.Events
                 }, _cancellationTokenSource.Token);
             }
         }
-
         private void SetMountPoint(UsbDevice usbDevice, string mountPoint)
         {
             if (string.IsNullOrEmpty(usbDevice.MountedDirectoryPath) && !string.IsNullOrEmpty(mountPoint))
@@ -248,6 +265,9 @@ namespace Usb.Events
 
         [DllImport("UsbEventWatcher.Linux.so", CallingConvention = CallingConvention.Cdecl)]
         static extern void StartLinuxWatcher(UsbDeviceCallback insertedCallback, UsbDeviceCallback removedCallback, bool includeTTY);
+        
+        [DllImport("UsbEventWatcher.Linux.so", CallingConvention = CallingConvention.Cdecl)]
+        static extern void StartLinuxWatcherWithSubSystem(UsbDeviceCallback insertedCallback, UsbDeviceCallback removedCallback, string[] subSystems,int subsCount);
 
         [DllImport("UsbEventWatcher.Linux.so", CallingConvention = CallingConvention.Cdecl)]
         static extern void StopLinuxWatcher();

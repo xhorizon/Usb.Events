@@ -12,6 +12,7 @@
 typedef struct UsbDeviceData
 {
     char DeviceName[255];
+    char SubSystem[255];
     char DeviceSystemPath[255];
     char Product[255];
     char ProductDescription[255];
@@ -141,12 +142,19 @@ void GetDeviceInfo(struct udev_device* dev)
     const char* VendorID = udev_device_get_property_value(dev, "ID_VENDOR_ID");
     if (VendorID)
         strcpy(usbDevice.VendorID, VendorID);
+
+    const char* SubSystem = udev_device_get_property_value(dev, "SUBSYSTEM");
+    if(SubSystem)
+    {
+        strcpy(usbDevice.SubSystem, SubSystem);
+    }
+
 }
 
 void MonitorCallback(struct udev_device* dev)
 {
     const char* action = udev_device_get_action(dev);
-    
+
     // if device already exists "action" is NULL, otherwise it can be "add", "remove", "change", "move", "online", "offline", "bind", "unbind"
 
     if (action && (strcmp(action, "remove") == 0 || strcmp(action, "unbind") == 0 || strcmp(action, "offline") == 0))
@@ -159,13 +167,14 @@ void MonitorCallback(struct udev_device* dev)
     }
 }
 
-void EnumerateDevices(struct udev* udev, int includeTTY)
+void EnumerateDevices(struct udev* udev, const char ** subSystems,int subSystemCount)
 {
     struct udev_enumerate* enumerate = udev_enumerate_new(udev);
 
-    udev_enumerate_add_match_subsystem(enumerate, "usb");
-    if (includeTTY)
-	    udev_enumerate_add_match_subsystem(enumerate, "tty");
+    for (int i = 0; i < subSystemCount; i++) {
+        udev_enumerate_add_match_subsystem(enumerate, subSystems[i]);
+    }
+
     udev_enumerate_scan_devices(enumerate);
 
     struct udev_list_entry* devices = udev_enumerate_get_list_entry(enumerate);
@@ -215,13 +224,14 @@ int msleep(long msec)
     return res;
 }
 
-void MonitorDevices(struct udev* udev, int includeTTY)
+void MonitorDevices(struct udev* udev, const char ** subSystems,int subSystemCount)
 {
-    struct udev_monitor* mon = udev_monitor_new_from_netlink(udev, "udev");
+    struct udev_monitor *mon = udev_monitor_new_from_netlink(udev, "udev");
 
-    udev_monitor_filter_add_match_subsystem_devtype(mon, "usb", NULL);
-    if (includeTTY)
-	    udev_monitor_filter_add_match_subsystem_devtype(mon, "tty", NULL);
+    for (int i = 0; i < subSystemCount; i++) {
+        udev_monitor_filter_add_match_subsystem_devtype(mon, subSystems[i], NULL);
+    }
+
     udev_monitor_enable_receiving(mon);
 
     int fd = udev_monitor_get_fd(mon);
@@ -292,6 +302,27 @@ void MonitorDevices(struct udev* udev, int includeTTY)
 extern "C" {
 #endif
 
+    void StartLinuxWatcherWithSubSystem(UsbDeviceCallback insertedCallback, UsbDeviceCallback removedCallback, const char** subSystemArr,int subSystemCount)
+    {
+        InsertedCallback = insertedCallback;
+        RemovedCallback = removedCallback;
+
+        g_udev = udev_new();
+
+        if (!g_udev)
+        {
+            fprintf(stderr, "udev_new() failed\n");
+            return;
+        }
+
+        runLinuxWatcher = 1;
+
+        EnumerateDevices(g_udev, subSystemArr,subSystemCount);
+        MonitorDevices(g_udev, subSystemArr,subSystemCount);
+
+        udev_unref(g_udev);
+    }
+
     void StartLinuxWatcher(UsbDeviceCallback insertedCallback, UsbDeviceCallback removedCallback, int includeTTY)
     {
         InsertedCallback = insertedCallback;
@@ -307,8 +338,15 @@ extern "C" {
 
         runLinuxWatcher = 1;
 
-        EnumerateDevices(g_udev, includeTTY);
-        MonitorDevices(g_udev, includeTTY);
+        if (includeTTY > 0) {
+            const char *subs[] = {"usb", "tty"};
+            EnumerateDevices(g_udev, subs, 2);
+            MonitorDevices(g_udev, subs, 2);
+        } else {
+            const char *subs[] = {"usb"};
+            EnumerateDevices(g_udev, subs, 1);
+            MonitorDevices(g_udev, subs, 1);
+        }
 
         udev_unref(g_udev);
     }
